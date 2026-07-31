@@ -1,0 +1,29 @@
+# Created by https://www.toptal.com/developers/gitignore/api/fsharp
+# Edit at https://www.toptal.com/developers/gitignore?templates=fsharp
+
+### fsharp ###
+lib/debug
+lib/release
+Debug
+*.suo
+*.user
+obj
+bin
+/build/
+*.exe
+!.paket/paket.bootstrapper.exe
+.ionide/
+.fake
+
+# End of https://www.toptal.com/developers/gitignore/api/fsharp
+
+# Devenv
+.devenv*
+devenv.local.nix
+devenv.local.yaml
+
+# direnv
+.direnv
+
+# pre-commit
+.pre-commit-config.yaml
