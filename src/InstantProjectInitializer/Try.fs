@@ -1,3 +1,4 @@
+[<RequireQualifiedAccess>]
 module Try
 
 let ofCatch (f: 'a -> 'b) (a: 'a) =
