@@ -46,8 +46,6 @@ let getDirenv () =
     """
     { FileName = envrcFileName; FileData = envrcData }
 
-// TODO: fileDataから書き出しする関数
-// ただし書き出し処理自体はIOモジュールに配置
 let putFileData (writeFile: string * string -> unit) (fileData: fileData) =
     writeFile (fileData.FileName, fileData.FileData)
 
