@@ -6,13 +6,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Result.fs" />
+    <Compile Include="Validation.fs" />
     <Compile Include="Domain.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Argu" Version="6.2.5" />
+    <PackageReference Include="FsHttp" Version="15.0.3" />
     <PackageReference Include="FsToolkit.ErrorHandling" Version="5.2.0" />
   </ItemGroup>
 
