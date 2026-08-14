@@ -9,6 +9,7 @@
   <ItemGroup>
     <Compile Include="ValidationTests.fs" />
     <Compile Include="DomainTests.fs" />
+    <Compile Include="IOTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
 

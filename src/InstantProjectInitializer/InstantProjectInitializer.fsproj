@@ -8,6 +8,7 @@
   <ItemGroup>
     <Compile Include="Validation.fs" />
     <Compile Include="Domain.fs" />
+    <Compile Include="IO.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
@@ -15,6 +16,7 @@
     <PackageReference Include="Argu" Version="6.2.5" />
     <PackageReference Include="FsHttp" Version="15.0.3" />
     <PackageReference Include="FsToolkit.ErrorHandling" Version="5.2.0" />
+    <PackageReference Include="Microsoft.Playwright" Version="1.62.0" />
   </ItemGroup>
 
 </Project>
