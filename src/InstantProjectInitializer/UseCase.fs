@@ -46,11 +46,27 @@ let getDirenv () =
     """
     { FileName = envrcFileName; FileData = envrcData }
 
-let putFileData (writeFile: string * string -> unit) (fileData: fileData) =
-    writeFile (fileData.FileName, fileData.FileData)
 
-let putFileDatas (writeFile: string * string -> unit) (fileDatas: fileData list) =
-    for f in fileDatas do
-        putFileData writeFile f
+let rec putFileDatalist (writeFile: string * string -> unit) (fileDataList: fileData list): unit =
+    match fileDataList with
+    | head :: tail ->
+        writeFile (head.FileName, head.FileData)
+        putFileDatalist writeFile tail
+    | [] -> ()
 
+let run
+    (getGitignoreFn: string list -> AsyncValidation<fileData, string>)
+    (getDevenvFn: string list -> AsyncValidation<fileData * fileData, string>)
+    (getDirenvFn: unit -> fileData)
+    (putFileDataListFn: fileData list -> unit)
+    (langs: string list)
+    : AsyncValidation<unit, string> =
+    asyncValidation {
+        let! gitignoreData = getGitignoreFn langs
+        and! devenvNixData, devenvYamlData = getDevenvFn langs
+        let direnvData = getDirenvFn ()
 
+        let fileDataList = [gitignoreData; devenvNixData; devenvYamlData; direnvData]
+
+        putFileDataListFn fileDataList
+    }
