@@ -6,7 +6,6 @@ open Microsoft.Playwright
 open FsHttp
 open FsToolkit.ErrorHandling
 
-// TODO:テストコード
 let requestGitignoreIO (langs: string list) : AsyncValidation<string, string> =
     let url = langs
                 |> String.concat ","
