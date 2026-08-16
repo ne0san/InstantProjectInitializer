@@ -1,4 +1,4 @@
-module Domain
+module UseCase
 
 open FsToolkit.ErrorHandling
 
@@ -7,7 +7,7 @@ type fileData = { FileName:string; FileData:string }
 
 
 // gitIgnoreを取得して返却
-let getGitignore (langs: string list) (requestGitignore: string list -> AsyncValidation<string,string>): AsyncValidation<fileData, string> =
+let getGitignore (requestGitignore: string list -> AsyncValidation<string,string>) (langs: string list): AsyncValidation<fileData, string> =
     let fileName = ".gitignore"
 
     asyncValidation {
@@ -16,7 +16,7 @@ let getGitignore (langs: string list) (requestGitignore: string list -> AsyncVal
         return { FileName = fileName; FileData = gitignoreData }
     }
 
-let getDevenv (langs: string list) (requestDevenv: string list -> AsyncValidation<(string * string), string>): AsyncValidation<(fileData * fileData), string> =
+let getDevenv (requestDevenv: string list -> AsyncValidation<(string * string), string>) (langs: string list): AsyncValidation<(fileData * fileData), string> =
     let nixFileName = "devenv.nix"
     let yamlFileName = "devenv.yaml"
 
@@ -47,11 +47,11 @@ let getDirenv () =
     { FileName = envrcFileName; FileData = envrcData }
 
 
-let rec putFileDatalist (writeFile: string * string -> unit) (fileDataList: fileData list): unit =
+let rec putFileDataList (writeFile: string * string -> unit) (fileDataList: fileData list): unit =
     match fileDataList with
     | head :: tail ->
         writeFile (head.FileName, head.FileData)
-        putFileDatalist writeFile tail
+        putFileDataList writeFile tail
     | [] -> ()
 
 let run
@@ -62,11 +62,16 @@ let run
     (langs: string list)
     : AsyncValidation<unit, string> =
     asyncValidation {
+        printfn "Start Retrieving Target Files..."
         let! gitignoreData = getGitignoreFn langs
         and! devenvNixData, devenvYamlData = getDevenvFn langs
         let direnvData = getDirenvFn ()
 
+        printfn "All files were successfully retrieved"
+        printfn "Start Exporting File..."
+
         let fileDataList = [gitignoreData; devenvNixData; devenvYamlData; direnvData]
 
         putFileDataListFn fileDataList
+        printfn "File Export Complete"
     }
