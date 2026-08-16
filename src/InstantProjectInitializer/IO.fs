@@ -40,19 +40,22 @@ let requestGitignoreIO (langs: string list) : AsyncValidation<string, string> =
                 | _ -> raise ex
             | _ -> raise ex)
 
-// TODO: 仕組みがわからん
 let private extractFileText (page: IPage) (filename: string) : Async<Result<string, string>> =
     async {
         try
+            // コードブロックを指定
             let block =
                 page
                     .Locator("div.relative", PageLocatorOptions(HasText = filename))
                     .First
 
+            // 該当の要素が出現するまで待機
             do! block.WaitForAsync() |> Async.AwaitTask
 
+            // ブロック内の要素のテキストを取得
             let! text = block.Locator("pre").InnerTextAsync() |> Async.AwaitTask
 
+            // 中身が空か確認
             if String.IsNullOrWhiteSpace text then
                 return Error $"{filename}: 中身が空だった(未知の構造の可能性)"
             else
@@ -70,13 +73,18 @@ let requestDevenvNew (langs: string list) : AsyncValidation<(string * string), s
     let defaultTimeoutMs = 30_000.0f
     asyncValidation {
         try
+            // Playwright作成
             use! playwright = Playwright.CreateAsync() |> Async.AwaitTask
+            // ヘッドレスブラウザ起動
             let! browser =
                 playwright.Chromium.LaunchAsync(BrowserTypeLaunchOptions(Headless = true))
                 |> Async.AwaitTask
+            // ページを開く
             let! page = browser.NewPageAsync() |> Async.AwaitTask
+            // 開いたページにタイムアウトを設定
             page.SetDefaultTimeout defaultTimeoutMs
 
+            // URLにアクセス。レスポンス自体は使わない
             do! page.GotoAsync url |> Async.AwaitTask |> Async.Ignore
 
             // どちらも評価してから合成する(fail-fastにしない)
@@ -87,5 +95,3 @@ let requestDevenvNew (langs: string list) : AsyncValidation<(string * string), s
         with ex ->
             return! Error [ ex.Message ]
     }
-
-// TODO: ファイル生成

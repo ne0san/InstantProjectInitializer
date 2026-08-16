@@ -22,7 +22,7 @@ let requestGitignoreIOTests =
     ]
 
 // NOTE: devenv.new に Playwright でアクセスする統合テスト。
-// 実行には ネットワーク接続 と `playwright install chromium` が必要。
+// 実行には ネットワーク接続 と src/InstantProjectInitializer/で`"bin/Debug/net10.0/.playwright/node/darwin-arm64/node" "bin/Debug/net10.0/.playwright/package/cli.js" install chromium` が必要。
 [<Tests>]
 let requestDevenvNewTests =
     testList "IO.requestDevenvNew" [
