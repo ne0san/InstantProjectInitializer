@@ -2,6 +2,8 @@ module IOTests
 
 open Expecto
 
+// NOTE: IO.fsの全関数について、外部依存が伴うため結合テストとする。
+
 // NOTE: 外部サービスへの実際のリクエストを行う統合テスト。実行にはネットワーク接続が必要。
 [<Tests>]
 let requestGitignoreIOTests =

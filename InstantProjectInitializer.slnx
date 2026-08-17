@@ -1,0 +1,14 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/src/">
+    <Project Path="src/InstantProjectInitializer/InstantProjectInitializer.fsproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/InstantProjectInitializer.IntegrationTests/InstantProjectInitializer.IntegrationTests.fsproj" />
+    <Project Path="tests/InstantProjectInitializer.UnitTests/InstantProjectInitializer.UnitTests.fsproj" />
+  </Folder>
+</Solution>

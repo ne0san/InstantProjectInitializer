@@ -17,11 +17,7 @@ let main argv =
     let results = parser.ParseCommandLine(inputs = argv, raiseOnUsage = true)
     let langs   = results.GetResult Langs
 
-    let getGitignoreFn = getGitignore requestGitignoreIO
-    let getDevenvFn = getDevenv requestDevenvNew
-    let putFileDataListFn = putFileDataList File.WriteAllText
-
-    let runCli = run getGitignoreFn getDevenvFn getDirenv putFileDataListFn
+    let runCli = run requestGitignoreIO requestDevenvNew File.WriteAllText
 
     match langs |> runCli |> Async.RunSynchronously with
     | Ok () ->

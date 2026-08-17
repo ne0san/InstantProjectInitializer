@@ -122,72 +122,59 @@ let putFileDataListTests =
 let runTests =
     testList "run" [
         testCase "成功時、Ok を返す" <| fun _ ->
-            let gitignoreStub = fun _ -> AsyncValidation.ok { UseCase.FileName = ".gitignore"; UseCase.FileData = "gi" }
-            let devenvStub    = fun _ -> AsyncValidation.ok ({ UseCase.FileName = "devenv.nix"; UseCase.FileData = "nix" },
-                                                             { UseCase.FileName = "devenv.yaml"; UseCase.FileData = "yaml" })
-            let direnvStub    = fun () -> { UseCase.FileName = ".envrc"; UseCase.FileData = "envrc" }
+            let gitignoreStub = fun _ -> AsyncValidation.ok "gi"
+            let devenvStub    = fun _ -> AsyncValidation.ok ("nix", "yaml")
             let putStub       = fun _ -> ()
-            let result = UseCase.run gitignoreStub devenvStub direnvStub putStub ["F#"] |> Async.RunSynchronously
+            let result = UseCase.run gitignoreStub devenvStub putStub ["F#"] |> Async.RunSynchronously
             Expect.isOk result "Ok を返すべき"
 
-        testCase "成功時、putFileDataListFn に 4 ファイルが渡される" <| fun _ ->
-            let gitignoreStub = fun _ -> AsyncValidation.ok { UseCase.FileName = ".gitignore"; UseCase.FileData = "gi" }
-            let devenvStub    = fun _ -> AsyncValidation.ok ({ UseCase.FileName = "devenv.nix"; UseCase.FileData = "nix" },
-                                                             { UseCase.FileName = "devenv.yaml"; UseCase.FileData = "yaml" })
-            let direnvStub    = fun () -> { UseCase.FileName = ".envrc"; UseCase.FileData = "envrc" }
-            let mutable capturedList = []
-            let putStub = fun list -> capturedList <- list
-            UseCase.run gitignoreStub devenvStub direnvStub putStub ["F#"] |> Async.RunSynchronously |> ignore
-            Expect.hasLength capturedList 4 "4ファイル渡されるべき"
+        testCase "成功時、writeFileFn が 4 回呼ばれる" <| fun _ ->
+            let gitignoreStub = fun _ -> AsyncValidation.ok "gi"
+            let devenvStub    = fun _ -> AsyncValidation.ok ("nix", "yaml")
+            let mutable callCount = 0
+            let putStub = fun _ -> callCount <- callCount + 1
+            UseCase.run gitignoreStub devenvStub putStub ["F#"] |> Async.RunSynchronously |> ignore
+            Expect.equal callCount 4 "4回呼ばれるべき"
 
-        testCase "成功時、putFileDataListFn に渡されるリストに全ファイル名が含まれる" <| fun _ ->
-            let gitignoreStub = fun _ -> AsyncValidation.ok { UseCase.FileName = ".gitignore"; UseCase.FileData = "gi" }
-            let devenvStub    = fun _ -> AsyncValidation.ok ({ UseCase.FileName = "devenv.nix"; UseCase.FileData = "nix" },
-                                                             { UseCase.FileName = "devenv.yaml"; UseCase.FileData = "yaml" })
-            let direnvStub    = fun () -> { UseCase.FileName = ".envrc"; UseCase.FileData = "envrc" }
-            let mutable capturedList: UseCase.fileData list = []
-            let putStub = fun list -> capturedList <- list
-            UseCase.run gitignoreStub devenvStub direnvStub putStub ["F#"] |> Async.RunSynchronously |> ignore
-            let names = capturedList |> List.map (fun f -> f.FileName)
-            Expect.contains names ".gitignore"  ""
-            Expect.contains names "devenv.nix"  ""
-            Expect.contains names "devenv.yaml" ""
-            Expect.contains names ".envrc"      ""
+        testCase "成功時、writeFileFn に渡されるファイル名に全ファイル名が含まれる" <| fun _ ->
+            let gitignoreStub = fun _ -> AsyncValidation.ok "gi"
+            let devenvStub    = fun _ -> AsyncValidation.ok ("nix", "yaml")
+            let mutable capturedNames = []
+            let putStub = fun (name, _) -> capturedNames <- name :: capturedNames
+            UseCase.run gitignoreStub devenvStub putStub ["F#"] |> Async.RunSynchronously |> ignore
+            Expect.contains capturedNames ".gitignore"  ""
+            Expect.contains capturedNames "devenv.nix"  ""
+            Expect.contains capturedNames "devenv.yaml" ""
+            Expect.contains capturedNames ".envrc"      ""
 
-        testCase "getGitignoreFn が Error を返す場合、Error を返す" <| fun _ ->
+        testCase "requestGitignoreFn が Error を返す場合、Error を返す" <| fun _ ->
             let gitignoreStub = fun _ -> AsyncValidation.error "gitignore error"
-            let devenvStub    = fun _ -> AsyncValidation.ok ({ UseCase.FileName = "devenv.nix"; UseCase.FileData = "nix" },
-                                                             { UseCase.FileName = "devenv.yaml"; UseCase.FileData = "yaml" })
-            let direnvStub    = fun () -> { UseCase.FileName = ".envrc"; UseCase.FileData = "envrc" }
+            let devenvStub    = fun _ -> AsyncValidation.ok ("nix", "yaml")
             let putStub       = fun _ -> ()
-            let result = UseCase.run gitignoreStub devenvStub direnvStub putStub [] |> Async.RunSynchronously
+            let result = UseCase.run gitignoreStub devenvStub putStub [] |> Async.RunSynchronously
             Expect.isError result "Error を返すべき"
 
-        testCase "getDevenvFn が Error を返す場合、Error を返す" <| fun _ ->
-            let gitignoreStub = fun _ -> AsyncValidation.ok { UseCase.FileName = ".gitignore"; UseCase.FileData = "gi" }
+        testCase "requestDevenvFn が Error を返す場合、Error を返す" <| fun _ ->
+            let gitignoreStub = fun _ -> AsyncValidation.ok "gi"
             let devenvStub    = fun _ -> AsyncValidation.error "devenv error"
-            let direnvStub    = fun () -> { UseCase.FileName = ".envrc"; UseCase.FileData = "envrc" }
             let putStub       = fun _ -> ()
-            let result = UseCase.run gitignoreStub devenvStub direnvStub putStub [] |> Async.RunSynchronously
+            let result = UseCase.run gitignoreStub devenvStub putStub [] |> Async.RunSynchronously
             Expect.isError result "Error を返すべき"
 
-        testCase "getGitignoreFn と getDevenvFn が両方 Error を返す場合、両エラーが収集される" <| fun _ ->
+        testCase "requestGitignoreFn と requestDevenvFn が両方 Error を返す場合、両エラーが収集される" <| fun _ ->
             let gitignoreStub = fun _ -> AsyncValidation.error "gitignore error"
             let devenvStub    = fun _ -> AsyncValidation.error "devenv error"
-            let direnvStub    = fun () -> { UseCase.FileName = ".envrc"; UseCase.FileData = "envrc" }
             let putStub       = fun _ -> ()
-            let result = UseCase.run gitignoreStub devenvStub direnvStub putStub [] |> Async.RunSynchronously
+            let result = UseCase.run gitignoreStub devenvStub putStub [] |> Async.RunSynchronously
             match result with
             | Error errors -> Expect.hasLength errors 2 "両方のエラーが収集されるべき"
             | Ok _ -> failtest "Error を期待したが Ok だった"
 
-        testCase "Error 時、putFileDataListFn は呼ばれない" <| fun _ ->
+        testCase "Error 時、writeFileFn は呼ばれない" <| fun _ ->
             let gitignoreStub = fun _ -> AsyncValidation.error "error"
-            let devenvStub    = fun _ -> AsyncValidation.ok ({ UseCase.FileName = "devenv.nix"; UseCase.FileData = "nix" },
-                                                             { UseCase.FileName = "devenv.yaml"; UseCase.FileData = "yaml" })
-            let direnvStub    = fun () -> { UseCase.FileName = ".envrc"; UseCase.FileData = "envrc" }
+            let devenvStub    = fun _ -> AsyncValidation.ok ("nix", "yaml")
             let mutable putCalled = false
             let putStub = fun _ -> putCalled <- true
-            UseCase.run gitignoreStub devenvStub direnvStub putStub [] |> Async.RunSynchronously |> ignore
-            Expect.isFalse putCalled "Error 時に putFileDataListFn は呼ばれないべき"
+            UseCase.run gitignoreStub devenvStub putStub [] |> Async.RunSynchronously |> ignore
+            Expect.isFalse putCalled "Error 時に writeFileFn は呼ばれないべき"
     ]

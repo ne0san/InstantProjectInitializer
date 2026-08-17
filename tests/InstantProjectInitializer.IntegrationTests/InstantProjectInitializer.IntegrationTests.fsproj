@@ -8,7 +8,6 @@
 
   <ItemGroup>
     <Compile Include="IOTests.fs" />
-    <Compile Include="UseCaseTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
 

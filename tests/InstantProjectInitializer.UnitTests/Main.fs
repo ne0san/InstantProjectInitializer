@@ -1,4 +1,4 @@
-﻿module InstantProjectInitializer.Tests
+﻿module InstantProjectInitializer.UnitTests
 open Expecto
 
 [<EntryPoint>]
