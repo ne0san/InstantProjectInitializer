@@ -3,15 +3,25 @@
   ...
 }:
 {
-  # F# has no dedicated devenv language option.
   packages = [
     pkgs.fsharp
   ];
-  # https://devenv.sh/languages/
-  languages = {
-    dotnet.enable = true;
-    dotnet.package = pkgs.dotnet-sdk_10;
+
+  languages.dotnet = {
+    enable = true;
+    package = pkgs.dotnet-sdk_10;
   };
-  # See full reference at https://devenv.sh/reference/options/
+  scripts = {
+    test-unit.exec = ''
+      dotnet run --project tests/InstantProjectInitializer.UnitTests
+    '';
+    test-integration.exec = ''
+      dotnet run --project tests/InstantProjectInitializer.IntegrationTests
+    '';
+    test-all.exec = ''
+      test-unit
+      test-integration
+    '';
+  };
 }
 
