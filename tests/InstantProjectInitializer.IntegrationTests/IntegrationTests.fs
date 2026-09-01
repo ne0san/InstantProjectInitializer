@@ -7,23 +7,60 @@ open IO
 // NOTE: ファイル出力については`File.WriteAllText`を用いるのみのため、現時点ではファイル自体の作成は行わない
 
 let makeDryRun () =
-    // ファイル出力スタブ
     let writeTextCalls = ResizeArray<string * string>()
-    let writeTextStub arg =
-        writeTextCalls.Add arg
-
+    let writeTextStub arg = writeTextCalls.Add arg
     let dryRunCli = run requestGitignoreIO requestDevenvNewApi writeTextStub
-
     writeTextCalls, dryRunCli
 
 [<Tests>]
-let IntegrationTests =
-    ptestList "DryRunIntegrationTest" [
-        ptestCase "正常系: 有効な言語を渡す場合" <| fun _ ->
-        let writeTexoCalls, dryRunCli = makeDryRun ()
-        Expect.equal (1 + 1) 3 "わざと失敗させるテスト"
-    ]
-// どう書きたいか
-// 事前準備、出力ファイルだけ変数に導入させるスタブを全てのテストで用意
-// expectoで共通のセットアップをどう書かせるか
+let integrationTests =
+    testList "DryRunIntegrationTest" [
+        testCase "正常系: 単一言語を渡すと Ok を返す" <| fun _ ->
+            let _, dryRunCli = makeDryRun ()
+            let result = dryRunCli ["Python"] |> Async.RunSynchronously
+            Expect.isOk result "Ok を返すべき"
 
+        testCase "正常系: 単一言語を渡すと 4 ファイルが出力される" <| fun _ ->
+            let writeTextCalls, dryRunCli = makeDryRun ()
+            dryRunCli ["Python"] |> Async.RunSynchronously |> ignore
+            Expect.equal writeTextCalls.Count 4 "4ファイルが出力されるべき"
+
+        testCase "正常系: 出力ファイル名に .gitignore, devenv.nix, devenv.yaml, .envrc が含まれる" <| fun _ ->
+            let writeTextCalls, dryRunCli = makeDryRun ()
+            dryRunCli ["Python"] |> Async.RunSynchronously |> ignore
+            let fileNames = writeTextCalls |> Seq.map fst |> Set.ofSeq
+            Expect.contains fileNames ".gitignore"  ".gitignore が含まれるべき"
+            Expect.contains fileNames "devenv.nix"  "devenv.nix が含まれるべき"
+            Expect.contains fileNames "devenv.yaml" "devenv.yaml が含まれるべき"
+            Expect.contains fileNames ".envrc"      ".envrc が含まれるべき"
+
+        testCase "正常系: 複数言語を渡すと Ok を返す" <| fun _ ->
+            let _, dryRunCli = makeDryRun ()
+            let result = dryRunCli ["Python"; "Go"] |> Async.RunSynchronously
+            Expect.isOk result "Ok を返すべき"
+
+        testCase "正常系: 複数言語を渡すと 4 ファイルが出力される" <| fun _ ->
+            let writeTextCalls, dryRunCli = makeDryRun ()
+            dryRunCli ["Python"; "Go"] |> Async.RunSynchronously |> ignore
+            Expect.equal writeTextCalls.Count 4 "4ファイルが出力されるべき"
+
+        testCase "異常系: 存在しない言語を渡すと Error を返す" <| fun _ ->
+            let _, dryRunCli = makeDryRun ()
+            let result = dryRunCli ["nonexistentlang_xyz"] |> Async.RunSynchronously
+            Expect.isError result "Error を返すべき"
+
+        testCase "異常系: 存在しない言語を渡した場合、ファイルは出力されない" <| fun _ ->
+            let writeTextCalls, dryRunCli = makeDryRun ()
+            dryRunCli ["nonexistentlang_xyz"] |> Async.RunSynchronously |> ignore
+            Expect.equal writeTextCalls.Count 0 "Error 時にファイル出力は行われないべき"
+
+        testCase "正常系: 言語指定なしでも Ok を返す" <| fun _ ->
+            let _, dryRunCli = makeDryRun ()
+            let result = dryRunCli [] |> Async.RunSynchronously
+            Expect.isOk result "Ok を返すべき"
+
+        testCase "正常系: 言語指定なしでも 4 ファイルが出力される" <| fun _ ->
+            let writeTextCalls, dryRunCli = makeDryRun ()
+            dryRunCli [] |> Async.RunSynchronously |> ignore
+            Expect.equal writeTextCalls.Count 4 "4ファイルが出力されるべき"
+    ]
