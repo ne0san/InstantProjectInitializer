@@ -142,8 +142,12 @@ home.packages = [
 ## 使い方 / Usage
 
 ```sh
-ipi <lang1> [lang2] [lang3] ...
+ipi <lang1> [lang2] [lang3] ... [--context <text>]
 ```
+
+| オプション / Option | 省略形 / Short | 説明 / Description |
+|---|---|---|
+| `--context <text>` | `-c <text>` | devenv.new に渡す追加コンテキスト |
 
 ### 例 / Examples
 
@@ -156,6 +160,10 @@ ipi python node
 
 # 複数言語 / Multiple languages
 ipi rust go python
+
+# 追加コンテキストを渡す / With additional context
+ipi python --context "with postgres and redis"
+ipi rust -c "use sqlx for database access"
 ```
 
 ### 実行例 / Example output
@@ -180,12 +188,14 @@ After execution, `.gitignore`, `devenv.nix`, `devenv.yaml`, and `.envrc` are gen
 - **ネットワーク接続が必要です。** gitignore.io および devenv.new の外部APIを呼び出します。
 - **既存ファイルは上書きされます。** 実行前に `.gitignore`, `devenv.nix`, `devenv.yaml`, `.envrc` をバックアップしてください。
 - 言語名は gitignore.io および devenv.new が認識できる名前を使用してください。
+- `--context` は devenv.new にのみ渡されます。`.gitignore` の生成には影響しません。
 
 ### English
 
 - **Network connection is required.** The tool calls external APIs from gitignore.io and devenv.new.
 - **Existing files will be overwritten.** Back up `.gitignore`, `devenv.nix`, `devenv.yaml`, and `.envrc` before running.
 - Use language names recognized by gitignore.io and devenv.new.
+- `--context` is passed only to devenv.new and does not affect `.gitignore` generation.
 
 ---
 

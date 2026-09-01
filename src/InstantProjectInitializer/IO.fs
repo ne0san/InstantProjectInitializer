@@ -50,10 +50,13 @@ type DevenvNewResponse = { devenv_nix: string; devenv_yaml: string }
 /// </summary>
 /// <param name="langs">指定言語一覧</param>
 /// <returns>devenv.nix,devenv.yaml</returns>
-let requestDevenvNewApi (langs: string list) : AsyncValidation<(string * string), string> =
-    let url = langs
-                |> String.concat ","
-                |> sprintf "https://devenv.new/api/generate?q=%s"
+let requestDevenvNewApi (langs: string list) (context: string option) : AsyncValidation<(string * string), string> =
+    let q =
+        match context with
+        | Some ctx -> langs @ [ctx]
+        | None     -> langs
+        |> String.concat ","
+    let url = sprintf "https://devenv.new/api/generate?q=%s" q
     asyncValidation {
         let! response =
             http {
