@@ -28,6 +28,11 @@ let getGitignoreTests =
             let stub = fun _ -> AsyncValidation.error "fetch failed"
             let result = UseCase.getGitignore stub [] |> Async.RunSynchronously
             Expect.equal result (Error [ "fetch failed" ]) ""
+
+        testCase "異常系: requestGitignore が複数エラーを返す場合、全エラーが伝播される" <| fun _ ->
+            let stub = fun _ -> async { return Error [ "error1"; "error2" ] }
+            let result = UseCase.getGitignore stub [] |> Async.RunSynchronously
+            Expect.equal result (Error [ "error1"; "error2" ]) ""
     ]
 
 [<Tests>]
@@ -60,6 +65,11 @@ let getDevenvTests =
             let stub = fun _ -> AsyncValidation.error "fetch failed"
             let result = UseCase.getDevenv stub [] |> Async.RunSynchronously
             Expect.equal result (Error [ "fetch failed" ]) ""
+
+        testCase "異常系: requestDevenv が複数エラーを返す場合、全エラーが伝播される" <| fun _ ->
+            let stub = fun _ -> async { return Error [ "error1"; "error2" ] }
+            let result = UseCase.getDevenv stub [] |> Async.RunSynchronously
+            Expect.equal result (Error [ "error1"; "error2" ]) ""
     ]
 
 [<Tests>]
@@ -170,11 +180,30 @@ let runTests =
             | Error errors -> Expect.hasLength errors 2 "両方のエラーが収集されるべき"
             | Ok _ -> failtest "Error を期待したが Ok だった"
 
-        testCase "Error 時、writeFileFn は呼ばれない" <| fun _ ->
+        testCase "requestGitignoreFn が Error を返す場合、writeFileFn は呼ばれない" <| fun _ ->
             let gitignoreStub = fun _ -> AsyncValidation.error "error"
             let devenvStub    = fun _ -> AsyncValidation.ok ("nix", "yaml")
             let mutable putCalled = false
             let putStub = fun _ -> putCalled <- true
             UseCase.run gitignoreStub devenvStub putStub [] |> Async.RunSynchronously |> ignore
             Expect.isFalse putCalled "Error 時に writeFileFn は呼ばれないべき"
+
+        testCase "requestDevenvFn が Error を返す場合、writeFileFn は呼ばれない" <| fun _ ->
+            let gitignoreStub = fun _ -> AsyncValidation.ok "gi"
+            let devenvStub    = fun _ -> AsyncValidation.error "error"
+            let mutable putCalled = false
+            let putStub = fun _ -> putCalled <- true
+            UseCase.run gitignoreStub devenvStub putStub [] |> Async.RunSynchronously |> ignore
+            Expect.isFalse putCalled "Error 時に writeFileFn は呼ばれないべき"
+
+        testCase "requestGitignoreFn と requestDevenvFn が両方 Error を返す場合、各エラーメッセージが伝播される" <| fun _ ->
+            let gitignoreStub = fun _ -> AsyncValidation.error "gitignore error"
+            let devenvStub    = fun _ -> AsyncValidation.error "devenv error"
+            let putStub       = fun _ -> ()
+            let result = UseCase.run gitignoreStub devenvStub putStub [] |> Async.RunSynchronously
+            match result with
+            | Error errors ->
+                Expect.contains errors "gitignore error" "gitignore のエラーメッセージが含まれるべき"
+                Expect.contains errors "devenv error"    "devenv のエラーメッセージが含まれるべき"
+            | Ok _ -> failtest "Error を期待したが Ok だった"
     ]
