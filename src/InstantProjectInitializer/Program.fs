@@ -17,7 +17,7 @@ let main argv =
     let results = parser.ParseCommandLine(inputs = argv, raiseOnUsage = true)
     let langs   = results.GetResult Langs
 
-    let runCli = run requestGitignoreIO requestDevenvNew File.WriteAllText
+    let runCli = run requestGitignoreIO requestDevenvNewApi File.WriteAllText
 
     match langs |> runCli |> Async.RunSynchronously with
     | Ok () ->

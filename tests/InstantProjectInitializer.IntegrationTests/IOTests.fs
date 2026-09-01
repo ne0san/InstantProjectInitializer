@@ -4,7 +4,7 @@ open Expecto
 
 // NOTE: IO.fsの全関数について、外部依存が伴うため結合テストとする。
 
-// NOTE: 外部サービスへの実際のリクエストを行う統合テスト。実行にはネットワーク接続が必要。
+// NOTE: gitignore.ioへの実際のリクエストを行う統合テスト。実行にはネットワーク接続が必要。
 [<Tests>]
 let requestGitignoreIOTests =
     testList "IO.requestGitignoreIO" [
@@ -21,15 +21,21 @@ let requestGitignoreIOTests =
         testCase "正常系: 複数言語を指定できる" <| fun _ ->
             let result = IO.requestGitignoreIO ["Python"; "Go"] |> Async.RunSynchronously
             Expect.isOk result "Ok を返すべき"
+
+        testCase "異常系：gitignoreIOで未対応の言語を指定した場合" <| fun _ ->
+            let result = IO.requestGitignoreIO ["nonexistentlang_xyz"] |> Async.RunSynchronously
+            Expect.isError result "Errorを返すべき"
+            match result with
+            | Ok _ -> failtest "エラーではない"
+            | Error msg -> Expect.isNotEmpty msg[0] "body は空でないべき"
     ]
 
-// NOTE: devenv.new に Playwright でアクセスする統合テスト。
-// 実行には ネットワーク接続 と src/InstantProjectInitializer/で`"bin/Debug/net10.0/.playwright/node/darwin-arm64/node" "bin/Debug/net10.0/.playwright/package/cli.js" install chromium` が必要。
+// NOTE: devenv.newのAPIへの実際のリクエストを行う統合テスト。実行にはネットワーク接続が必要。
 [<Tests>]
-let requestDevenvNewTests =
+let requestDevenvNewApiTests =
     testList "IO.requestDevenvNew" [
         testCase "正常系: 有効な言語を渡すと Ok (nixContent, yamlContent) が返る" <| fun _ ->
-            let result = IO.requestDevenvNew ["python"] |> Async.RunSynchronously
+            let result = IO.requestDevenvNewApi ["python"] |> Async.RunSynchronously
             match result with
             | Ok (nixContent, yamlContent) ->
                 // printfn "%s" nixContent
@@ -39,14 +45,15 @@ let requestDevenvNewTests =
             | Error msgs -> failtestf "Ok を期待したが Error だった: %A" msgs
 
         testCase "正常系: 複数言語を渡せる" <| fun _ ->
-            let result = IO.requestDevenvNew ["python"; "go"] |> Async.RunSynchronously
+            let result = IO.requestDevenvNewApi ["python"; "go"] |> Async.RunSynchronously
             Expect.isOk result "Ok を返すべき"
 
         testCase "異常系: devenv.nix または devenv.yaml が取得できない場合 Error が返る" <| fun _ ->
-            // extractFileText が TimeoutException を catch して Error を返し、
-            // asyncValidation の and! により両エラーが収集される
-            let result = IO.requestDevenvNew ["nonexistentlang_xyz"] |> Async.RunSynchronously
+            let result = IO.requestDevenvNewApi ["nonexistentlang_xyz"] |> Async.RunSynchronously
             match result with
             | Error msgs -> Expect.isNonEmpty msgs "エラーメッセージリストは空でないべき"
-            | Ok _ -> () // サイト仕様によっては成功する可能性もある
+            | Ok (nixContent, yamlContent) ->
+                printfn "devenv.new 生成失敗(タイムアウトor5xx系レスポンス)パターン確認できず" // その言語が存在しないことを前提に成功する場合もある
+                printfn "devenv.nix:\n%s" nixContent
+                printfn "devenv.yaml:\n%s" yamlContent
     ]
