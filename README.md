@@ -1,5 +1,7 @@
 # InstantProjectInitializer
 
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+
 プロジェクト初期化に必要なファイルを一発生成するCLIツール。
 
 A CLI tool that instantly generates project initialization files.
@@ -13,6 +15,7 @@ A CLI tool that instantly generates project initialization files.
 - [インストール / Installation](#インストール--installation)
 - [使い方 / Usage](#使い方--usage)
 - [注意点 / Notes](#注意点--notes)
+- [ライセンス / License](#ライセンス--license)
 
 ---
 
@@ -183,3 +186,9 @@ After execution, `.gitignore`, `devenv.nix`, `devenv.yaml`, and `.envrc` are gen
 - **Network connection is required.** The tool calls external APIs from gitignore.io and devenv.new.
 - **Existing files will be overwritten.** Back up `.gitignore`, `devenv.nix`, `devenv.yaml`, and `.envrc` before running.
 - Use language names recognized by gitignore.io and devenv.new.
+
+---
+
+## ライセンス / License
+
+[Apache License 2.0](LICENSE)
