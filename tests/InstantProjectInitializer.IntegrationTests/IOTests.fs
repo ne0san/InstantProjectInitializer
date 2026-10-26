@@ -57,6 +57,13 @@ let requestDevenvNewApiTests =
                 printfn "devenv.nix:\n%s" nixContent
                 printfn "devenv.yaml:\n%s" yamlContent
 
+        // NOTE: devenv.newは言語指定なしの場合500を返す想定だが、Okが返る場合もあり結果が安定しないためスキップ
+        ptestCase "異常系: 言語指定なしの場合 Error が返る(devenv.newが500を返す)" <| fun _ ->
+            let result = IO.requestDevenvNewApi [] None |> Async.RunSynchronously
+            match result with
+            | Error msgs -> Expect.isNonEmpty msgs "エラーメッセージリストは空でないべき"
+            | Ok _ -> failtest "Error を期待したが Ok だった"
+
         testCase "正常系: コンテキストを渡すと Ok が返る" <| fun _ ->
             let result = IO.requestDevenvNewApi ["python"] (Some "with postgres") |> Async.RunSynchronously
             Expect.isOk result "Ok を返すべき"
