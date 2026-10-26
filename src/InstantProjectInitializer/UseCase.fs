@@ -79,12 +79,13 @@ let rec putFileDataList (writeFile: string * string -> unit) (fileDataList: file
 /// </summary>
 let run
     (requestGitignoreFn: string list -> AsyncValidation<string,string>)
-    (requestDevenvFn: string list -> AsyncValidation<(string * string), string>)
+    (requestDevenvFn: string list -> string option -> AsyncValidation<(string * string), string>)
     (writeFileFn: string * string -> unit)
     (langs: string list)
+    (context: string option)
     : AsyncValidation<unit, string> =
     let getGitignoreFn = getGitignore requestGitignoreFn
-    let getDevenvFn = getDevenv requestDevenvFn
+    let getDevenvFn = getDevenv (fun ls -> requestDevenvFn ls context)
     let putFileDataListFn = putFileDataList writeFileFn
 
     asyncValidation {

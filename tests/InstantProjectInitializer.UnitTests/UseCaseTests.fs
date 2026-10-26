@@ -133,25 +133,25 @@ let runTests =
     testList "run" [
         testCase "成功時、Ok を返す" <| fun _ ->
             let gitignoreStub = fun _ -> AsyncValidation.ok "gi"
-            let devenvStub    = fun _ -> AsyncValidation.ok ("nix", "yaml")
+            let devenvStub    = fun _ _ -> AsyncValidation.ok ("nix", "yaml")
             let putStub       = fun _ -> ()
-            let result = UseCase.run gitignoreStub devenvStub putStub ["F#"] |> Async.RunSynchronously
+            let result = UseCase.run gitignoreStub devenvStub putStub ["F#"] None |> Async.RunSynchronously
             Expect.isOk result "Ok を返すべき"
 
         testCase "成功時、writeFileFn が 4 回呼ばれる" <| fun _ ->
             let gitignoreStub = fun _ -> AsyncValidation.ok "gi"
-            let devenvStub    = fun _ -> AsyncValidation.ok ("nix", "yaml")
+            let devenvStub    = fun _ _ -> AsyncValidation.ok ("nix", "yaml")
             let mutable callCount = 0
             let putStub = fun _ -> callCount <- callCount + 1
-            UseCase.run gitignoreStub devenvStub putStub ["F#"] |> Async.RunSynchronously |> ignore
+            UseCase.run gitignoreStub devenvStub putStub ["F#"] None |> Async.RunSynchronously |> ignore
             Expect.equal callCount 4 "4回呼ばれるべき"
 
         testCase "成功時、writeFileFn に渡されるファイル名に全ファイル名が含まれる" <| fun _ ->
             let gitignoreStub = fun _ -> AsyncValidation.ok "gi"
-            let devenvStub    = fun _ -> AsyncValidation.ok ("nix", "yaml")
+            let devenvStub    = fun _ _ -> AsyncValidation.ok ("nix", "yaml")
             let mutable capturedNames = []
             let putStub = fun (name, _) -> capturedNames <- name :: capturedNames
-            UseCase.run gitignoreStub devenvStub putStub ["F#"] |> Async.RunSynchronously |> ignore
+            UseCase.run gitignoreStub devenvStub putStub ["F#"] None |> Async.RunSynchronously |> ignore
             Expect.contains capturedNames ".gitignore"  ""
             Expect.contains capturedNames "devenv.nix"  ""
             Expect.contains capturedNames "devenv.yaml" ""
@@ -159,51 +159,78 @@ let runTests =
 
         testCase "requestGitignoreFn が Error を返す場合、Error を返す" <| fun _ ->
             let gitignoreStub = fun _ -> AsyncValidation.error "gitignore error"
-            let devenvStub    = fun _ -> AsyncValidation.ok ("nix", "yaml")
+            let devenvStub    = fun _ _ -> AsyncValidation.ok ("nix", "yaml")
             let putStub       = fun _ -> ()
-            let result = UseCase.run gitignoreStub devenvStub putStub [] |> Async.RunSynchronously
+            let result = UseCase.run gitignoreStub devenvStub putStub [] None |> Async.RunSynchronously
             Expect.isError result "Error を返すべき"
 
         testCase "requestDevenvFn が Error を返す場合、Error を返す" <| fun _ ->
             let gitignoreStub = fun _ -> AsyncValidation.ok "gi"
-            let devenvStub    = fun _ -> AsyncValidation.error "devenv error"
+            let devenvStub    = fun _ _ -> AsyncValidation.error "devenv error"
             let putStub       = fun _ -> ()
-            let result = UseCase.run gitignoreStub devenvStub putStub [] |> Async.RunSynchronously
+            let result = UseCase.run gitignoreStub devenvStub putStub [] None |> Async.RunSynchronously
             Expect.isError result "Error を返すべき"
 
         testCase "requestGitignoreFn と requestDevenvFn が両方 Error を返す場合、両エラーが収集される" <| fun _ ->
             let gitignoreStub = fun _ -> AsyncValidation.error "gitignore error"
-            let devenvStub    = fun _ -> AsyncValidation.error "devenv error"
+            let devenvStub    = fun _ _ -> AsyncValidation.error "devenv error"
             let putStub       = fun _ -> ()
-            let result = UseCase.run gitignoreStub devenvStub putStub [] |> Async.RunSynchronously
+            let result = UseCase.run gitignoreStub devenvStub putStub [] None |> Async.RunSynchronously
             match result with
             | Error errors -> Expect.hasLength errors 2 "両方のエラーが収集されるべき"
             | Ok _ -> failtest "Error を期待したが Ok だった"
 
         testCase "requestGitignoreFn が Error を返す場合、writeFileFn は呼ばれない" <| fun _ ->
             let gitignoreStub = fun _ -> AsyncValidation.error "error"
-            let devenvStub    = fun _ -> AsyncValidation.ok ("nix", "yaml")
+            let devenvStub    = fun _ _ -> AsyncValidation.ok ("nix", "yaml")
             let mutable putCalled = false
             let putStub = fun _ -> putCalled <- true
-            UseCase.run gitignoreStub devenvStub putStub [] |> Async.RunSynchronously |> ignore
+            UseCase.run gitignoreStub devenvStub putStub [] None |> Async.RunSynchronously |> ignore
             Expect.isFalse putCalled "Error 時に writeFileFn は呼ばれないべき"
 
         testCase "requestDevenvFn が Error を返す場合、writeFileFn は呼ばれない" <| fun _ ->
             let gitignoreStub = fun _ -> AsyncValidation.ok "gi"
-            let devenvStub    = fun _ -> AsyncValidation.error "error"
+            let devenvStub    = fun _ _ -> AsyncValidation.error "error"
             let mutable putCalled = false
             let putStub = fun _ -> putCalled <- true
-            UseCase.run gitignoreStub devenvStub putStub [] |> Async.RunSynchronously |> ignore
+            UseCase.run gitignoreStub devenvStub putStub [] None |> Async.RunSynchronously |> ignore
             Expect.isFalse putCalled "Error 時に writeFileFn は呼ばれないべき"
 
         testCase "requestGitignoreFn と requestDevenvFn が両方 Error を返す場合、各エラーメッセージが伝播される" <| fun _ ->
             let gitignoreStub = fun _ -> AsyncValidation.error "gitignore error"
-            let devenvStub    = fun _ -> AsyncValidation.error "devenv error"
+            let devenvStub    = fun _ _ -> AsyncValidation.error "devenv error"
             let putStub       = fun _ -> ()
-            let result = UseCase.run gitignoreStub devenvStub putStub [] |> Async.RunSynchronously
+            let result = UseCase.run gitignoreStub devenvStub putStub [] None |> Async.RunSynchronously
             match result with
             | Error errors ->
                 Expect.contains errors "gitignore error" "gitignore のエラーメッセージが含まれるべき"
                 Expect.contains errors "devenv error"    "devenv のエラーメッセージが含まれるべき"
             | Ok _ -> failtest "Error を期待したが Ok だった"
+
+        testCase "コンテキストあり: 成功時、Ok を返す" <| fun _ ->
+            let gitignoreStub = fun _ -> AsyncValidation.ok "gi"
+            let devenvStub    = fun _ _ -> AsyncValidation.ok ("nix", "yaml")
+            let putStub       = fun _ -> ()
+            let result = UseCase.run gitignoreStub devenvStub putStub ["F#"] (Some "with postgres") |> Async.RunSynchronously
+            Expect.isOk result "Ok を返すべき"
+
+        testCase "コンテキストあり: requestDevenvFn にコンテキストが渡される" <| fun _ ->
+            let gitignoreStub = fun _ -> AsyncValidation.ok "gi"
+            let mutable capturedContext = None
+            let devenvStub = fun _ ctx ->
+                capturedContext <- ctx
+                AsyncValidation.ok ("nix", "yaml")
+            let putStub = fun _ -> ()
+            UseCase.run gitignoreStub devenvStub putStub ["F#"] (Some "with postgres") |> Async.RunSynchronously |> ignore
+            Expect.equal capturedContext (Some "with postgres") "コンテキストが渡されるべき"
+
+        testCase "コンテキストなし: requestDevenvFn に None が渡される" <| fun _ ->
+            let gitignoreStub = fun _ -> AsyncValidation.ok "gi"
+            let mutable capturedContext = Some "dummy"
+            let devenvStub = fun _ ctx ->
+                capturedContext <- ctx
+                AsyncValidation.ok ("nix", "yaml")
+            let putStub = fun _ -> ()
+            UseCase.run gitignoreStub devenvStub putStub ["F#"] None |> Async.RunSynchronously |> ignore
+            Expect.equal capturedContext None "None が渡されるべき"
     ]
