@@ -7,18 +7,36 @@ type fileData = { FileName:string; FileData:string }
 
 
 /// <summary>
+/// gitignore.ioで取得できないdevenv/direnv用のgitignore設定
+/// </summary>
+let devenvGitignore =
+    [ ""
+      "# Devenv"
+      ".devenv*"
+      "devenv.local.nix"
+      "devenv.local.yaml"
+      ""
+      "# direnv"
+      ".direnv"
+      ""
+      "# pre-commit"
+      ".pre-commit-config.yaml"
+      "" ]
+    |> String.concat "\n"
+
+/// <summary>
 /// gitignore用ファイルデータ取得
 /// </summary>
 /// <param name="requestGitignore">外部にgitignore取得する用関数</param>
 /// <param name="langs">言語一覧</param>
-/// <returns>生成したgitignore</returns>
+/// <returns>生成したgitignore（devenv用設定を末尾に追記）</returns>
 let getGitignore (requestGitignore: string list -> AsyncValidation<string,string>) (langs: string list): AsyncValidation<fileData, string> =
     let fileName = ".gitignore"
 
     asyncValidation {
         let! gitignoreData = requestGitignore langs
 
-        return { FileName = fileName; FileData = gitignoreData }
+        return { FileName = fileName; FileData = gitignoreData + devenvGitignore }
     }
 
 /// <summary>

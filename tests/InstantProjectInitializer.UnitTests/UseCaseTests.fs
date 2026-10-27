@@ -10,7 +10,21 @@ let getGitignoreTests =
             let langs = [ "F#"; "Python" ]
             let stub = fun _ -> AsyncValidation.ok "gitignore content"
             let result = UseCase.getGitignore stub langs |> Async.RunSynchronously
-            Expect.equal result (Ok { UseCase.FileName = ".gitignore"; UseCase.FileData = "gitignore content" }) ""
+            Expect.equal result (Ok { UseCase.FileName = ".gitignore"; UseCase.FileData = "gitignore content" + UseCase.devenvGitignore }) ""
+
+        testCase "成功時、取得した内容の後ろに devenv 用設定が追記される" <| fun _ ->
+            let stub = fun _ -> AsyncValidation.ok "gitignore content"
+            let result = UseCase.getGitignore stub [ "F#" ] |> Async.RunSynchronously
+            match result with
+            | Ok data ->
+                Expect.stringStarts data.FileData "gitignore content" "取得した内容が先頭にあるべき"
+                Expect.stringEnds data.FileData UseCase.devenvGitignore "devenv 用設定が末尾にあるべき"
+            | Error _ -> failtest "Ok を期待したが Error だった"
+
+        testCase "devenv 用設定に .devenv* と .direnv が含まれる" <| fun _ ->
+            Expect.stringContains UseCase.devenvGitignore ".devenv*" ""
+            Expect.stringContains UseCase.devenvGitignore ".direnv"  ""
+            Expect.stringContains UseCase.devenvGitignore "devenv.local.nix" ""
 
         testCase "requestGitignore に langs が渡され、一度だけ呼ばれる" <| fun _ ->
             let langs = [ "F#"; "Python" ]
