@@ -4,6 +4,9 @@ on:
   pull_request:
     branches:
       - main
+    paths:
+      - "tests/InstantProjectInitializer.IntegrationTests/**"
+      - ".github/workflows/integration-test.yml"
 
 jobs:
   integration-test:
