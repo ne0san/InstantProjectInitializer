@@ -29,7 +29,7 @@ A CLI tool that instantly generates project initialization files.
 
 | ファイル | 生成元 |
 |---|---|
-| `.gitignore` | [gitignore.io](https://www.toptal.com/developers/gitignore) |
+| `.gitignore` | [gitignore.io](https://www.toptal.com/developers/gitignore) + devenv/direnv用設定（固定テンプレート） |
 | `devenv.nix` | [devenv.new](https://devenv.new) |
 | `devenv.yaml` | [devenv.new](https://devenv.new) |
 | `.envrc` | 固定テンプレート |
@@ -42,7 +42,7 @@ Generated files:
 
 | File | Source |
 |---|---|
-| `.gitignore` | [gitignore.io](https://www.toptal.com/developers/gitignore) |
+| `.gitignore` | [gitignore.io](https://www.toptal.com/developers/gitignore) + devenv/direnv entries (fixed template) |
 | `devenv.nix` | [devenv.new](https://devenv.new) |
 | `devenv.yaml` | [devenv.new](https://devenv.new) |
 | `.envrc` | Fixed template |
@@ -231,6 +231,7 @@ After execution, `.gitignore`, `devenv.nix`, `devenv.yaml`, and `.envrc` are gen
 - **既存ファイルは上書きされます。** 実行前に `.gitignore`, `devenv.nix`, `devenv.yaml`, `.envrc` をバックアップしてください。
 - 言語名は gitignore.io および devenv.new が認識できる名前を使用してください。
 - `--context` は devenv.new にのみ渡されます。`.gitignore` の生成には影響しません。
+- `.gitignore` の末尾には devenv / direnv 用の設定（`.devenv*`, `devenv.local.nix`, `devenv.local.yaml`, `.direnv`, `.pre-commit-config.yaml`）が自動で追記されます。
 
 ### English
 
@@ -238,6 +239,7 @@ After execution, `.gitignore`, `devenv.nix`, `devenv.yaml`, and `.envrc` are gen
 - **Existing files will be overwritten.** Back up `.gitignore`, `devenv.nix`, `devenv.yaml`, and `.envrc` before running.
 - Use language names recognized by gitignore.io and devenv.new.
 - `--context` is passed only to devenv.new and does not affect `.gitignore` generation.
+- Entries for devenv / direnv (`.devenv*`, `devenv.local.nix`, `devenv.local.yaml`, `.direnv`, `.pre-commit-config.yaml`) are automatically appended to the end of `.gitignore`.
 
 ---
 
