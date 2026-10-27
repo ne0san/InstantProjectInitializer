@@ -101,13 +101,34 @@ inputs = {
 };
 ```
 
-`home.packages` に追加します：
+`outputs` で `@inputs` により `inputs` 全体を束縛し、Home Managerのモジュールへ `extraSpecialArgs` で渡します：
 
 ```nix
-home.packages = [
-  inputs.ipi.packages.${pkgs.system}.default
-];
+outputs = { nixpkgs, home-manager, ... }@inputs: {
+  # standalone Home Manager の場合
+  homeConfigurations."<user>" = home-manager.lib.homeManagerConfiguration {
+    pkgs = nixpkgs.legacyPackages."<system>";
+    extraSpecialArgs = { inherit inputs; };
+    modules = [ ./home.nix ];
+  };
+};
+
+# NixOS / nix-darwin のモジュールとして使う場合（同様に outputs に @inputs が必要）
+home-manager.extraSpecialArgs = { inherit inputs; };
 ```
+
+`home.nix` の `home.packages` に追加します：
+
+```nix
+{ pkgs, inputs, ... }:
+{
+  home.packages = [
+    inputs.ipi.packages.${pkgs.stdenv.hostPlatform.system}.default
+  ];
+}
+```
+
+> **Note:** `dotnet-sdk_10` に依存しているため、`inputs.ipi.inputs.nixpkgs.follows` は設定しないことを推奨します（安定版nixpkgsではビルドできない場合があります）。
 
 ### English
 
@@ -127,13 +148,34 @@ inputs = {
 };
 ```
 
-Add to `home.packages`:
+Bind all inputs with `@inputs` in `outputs`, and pass them to your Home Manager modules via `extraSpecialArgs`:
 
 ```nix
-home.packages = [
-  inputs.ipi.packages.${pkgs.system}.default
-];
+outputs = { nixpkgs, home-manager, ... }@inputs: {
+  # Standalone Home Manager
+  homeConfigurations."<user>" = home-manager.lib.homeManagerConfiguration {
+    pkgs = nixpkgs.legacyPackages."<system>";
+    extraSpecialArgs = { inherit inputs; };
+    modules = [ ./home.nix ];
+  };
+};
+
+# As a NixOS / nix-darwin module (also requires @inputs in outputs)
+home-manager.extraSpecialArgs = { inherit inputs; };
 ```
+
+Add to `home.packages` in your `home.nix`:
+
+```nix
+{ pkgs, inputs, ... }:
+{
+  home.packages = [
+    inputs.ipi.packages.${pkgs.stdenv.hostPlatform.system}.default
+  ];
+}
+```
+
+> **Note:** Since this package depends on `dotnet-sdk_10`, setting `inputs.ipi.inputs.nixpkgs.follows` is not recommended (it may fail to build with a stable nixpkgs).
 
 **Supported platforms:** `x86_64-linux` / `aarch64-linux` / `aarch64-darwin` / `x86_64-darwin`
 
